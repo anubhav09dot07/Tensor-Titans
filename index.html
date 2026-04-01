@@ -38,7 +38,7 @@
           </select>
         </label>
         <label>Gemini Model
-          <input id="geminiModel" value="gemini-1.5-flash" />
+          <input id="geminiModel" value="gemini-2.5-flash" />
         </label>
       </div>
       <label>Gemini API Key
@@ -53,13 +53,13 @@
     <section class="panel output-panel">
       <h2>Generated SOAP Note</h2>
       <pre id="noteText">No note generated yet.</pre>
-      <h3>Structured JSON</h3>
-      <pre id="jsonText">{}</pre>
+      <button id="downloadPdfBtn" style="display:none; margin-top:12px;">Download as PDF</button>
       <h3>Safety Flags</h3>
       <ul id="flags"></ul>
     </section>
   </main>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
