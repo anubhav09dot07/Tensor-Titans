@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clinical Documentation Copilot</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-shape"></div>
+  <main class="container">
+    <section class="hero">
+      <p class="tag">Hackathon MVP</p>
+      <h1>Clinical Documentation Copilot</h1>
+      <p class="sub">
+        Convert consultation transcripts into structured SOAP notes in seconds.
+      </p>
+    </section>
+
+    <section class="panel input-panel">
+      <h2>Consultation Input</h2>
+      <div class="grid">
+        <label>Doctor Name
+          <input id="doctorName" placeholder="Dr Sharma" />
+        </label>
+        <label>Patient Name
+          <input id="patientName" placeholder="Ravi" />
+        </label>
+        <label>Age
+          <input id="age" type="number" min="0" max="120" placeholder="42" />
+        </label>
+        <label>Sex
+          <select id="sex">
+            <option value="">Select</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Gemini Model
+          <input id="geminiModel" value="gemini-2.5-flash" />
+        </label>
+      </div>
+      <label>Gemini API Key
+        <input id="geminiApiKey" type="password" placeholder="AIza..." />
+      </label>
+      <label>Consultation Transcript
+        <textarea id="transcript" rows="9" placeholder="Patient reports fever for 3 days with dry cough. No allergy. Prescribed paracetamol. Follow-up after 2 days."></textarea>
+      </label>
+      <button   id="generateBtn">Generate Clinical Note</button>
+      <p class="hint">Always review generated output before final clinical use.</p>
+    </section>
+
+    <section class="panel output-panel">
+      <h2>Generated SOAP Note</h2>
+      <pre id="noteText">No note generated yet.</pre>
+      <h3>Structured JSON</h3>
+      <pre id="jsonText">{}</pre>
+      <h3>Safety Flags</h3>
+      <ul id="flags"></ul>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
