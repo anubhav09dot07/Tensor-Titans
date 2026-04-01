@@ -17,8 +17,10 @@ async function generateNote() {
   const payload = {
     doctor_name: document.getElementById("doctorName").value.trim(),
     patient_name: document.getElementById("patientName").value.trim(),
+    patient_phone: document.getElementById("patientPhone").value.trim(),
     age: parseInt(document.getElementById("age").value, 10) || null,
     sex: document.getElementById("sex").value,
+    blood_group: document.getElementById("bloodGroup").value,
     transcript: document.getElementById("transcript").value.trim(),
     gemini_api_key: document.getElementById("geminiApiKey").value.trim(),
     model: document.getElementById("geminiModel").value.trim() || "gemini-2.5-flash",
@@ -26,6 +28,16 @@ async function generateNote() {
 
   if (!payload.transcript || payload.transcript.length < 10) {
     alert("Please provide a meaningful consultation transcript.");
+    return;
+  }
+
+  if (!/^\d{10}$/.test(payload.patient_phone)) {
+    alert("Patient phone number must be exactly 10 digits.");
+    return;
+  }
+
+  if (payload.age !== null && payload.age > 110) {
+    alert("Age cannot be more than 110.");
     return;
   }
 
@@ -89,9 +101,13 @@ function downloadPdf() {
         <td><strong>Patient:</strong> ${lastPayload.patient_name || "Unknown"}</td>
         <td><strong>Age/Sex:</strong> ${lastPayload.age || "NA"}/${lastPayload.sex || "NA"}</td>
       </tr>
+      <tr>
+        <td><strong>Phone:</strong> ${lastPayload.patient_phone || "NA"}</td>
+        <td><strong>Blood Group:</strong> ${lastPayload.blood_group || "NA"}</td>
+      </tr>
     </table>`;
 
-  const noteContent = `<pre style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size:10pt; margin:15px 0; padding:10px; background:#f5f5f5; border-left:3px solid #0e8a61;">
+  const noteContent = `<pre style="white-space: pre-wrap; word-break: break-word; font-family: 'Courier New', monospace; font-size:10pt; margin:15px 0; padding:10px; background:#f5f5f5; border-left:3px solid #0e8a61; max-height:none; height:auto; overflow:visible;">
 ${lastGeneratedData.note_text}
     </pre>`;
 
@@ -125,6 +141,7 @@ ${lastGeneratedData.note_text}
     image: { type: "jpeg", quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
+    pagebreak: { mode: ["css", "legacy"] },
   };
 
   html2pdf().set(options).from(element).save();

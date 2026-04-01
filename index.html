@@ -10,36 +10,57 @@
   <div class="bg-shape"></div>
   <main class="container">
     <section class="hero">
-      <p class="tag">Hackathon MVP</p>
+      <p class="tag">Hackathon</p>
       <h1>Clinical Documentation Copilot</h1>
-      <p class="sub">
+      <p class="sub"> 
         Convert consultation transcripts into structured SOAP notes in seconds.
       </p>
     </section>
-
     <section class="panel input-panel">
       <h2>Consultation Input</h2>
       <div class="grid">
         <label>Doctor Name
-          <input id="doctorName" placeholder="Dr Sharma" />
+          <input id="doctorName" placeholder="eg: Dr. Sharma" />
         </label>
         <label>Patient Name
-          <input id="patientName" placeholder="Ravi" />
+          <input id="patientName" placeholder="eg: Ravi Kumar" />
+        </label>
+        <label>Patient Phone
+          <input id="patientPhone" type="tel" placeholder="eg: 9876543210" maxlength="10" minlength="10" pattern="[0-9]{10}" inputmode="numeric" />
         </label>
         <label>Age
-          <input id="age" type="number" min="0" max="120" placeholder="42" />
+          <input id="age" type="number" min="0" max="110" placeholder="42" />
         </label>
         <label>Sex
           <select id="sex">
             <option value="">Select</option>
             <option>Male</option>
             <option>Female</option>
+            <option>Transgender</option>
+            <option>Non-binary</option>
+            <option>Genderqueer</option>
+            <option>Intersex</option>
+            <option>Prefer not to say</option>
             <option>Other</option>
+          </select>
+        </label>
+        <label>Blood Group
+          <select id="bloodGroup">
+            <option value="">Select</option>
+            <option>A+</option>
+            <option>A-</option>
+            <option>B+</option>
+            <option>B-</option>
+            <option>AB+</option>
+            <option>AB-</option>
+            <option>O+</option>
+            <option>O-</option>
+            <option>Unknown</option>
           </select>
         </label>
         <label>Gemini Model
           <input id="geminiModel" value="gemini-2.5-flash" />
-        </label>
+        </label>  
       </div>
       <label>Gemini API Key
         <input id="geminiApiKey" type="password" placeholder="AIza..." />
@@ -47,7 +68,7 @@
       <label>Consultation Transcript
         <textarea id="transcript" rows="9" placeholder="Patient reports fever for 3 days with dry cough. No allergy. Prescribed paracetamol."></textarea>
       </label>
-      <button   id="generateBtn">Generate Clinical Note</button>
+      <button   id="generateBtn">Generate Clinical Note</button>  
     </section>
 
     <section class="panel output-panel">
