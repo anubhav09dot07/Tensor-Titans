@@ -15,8 +15,10 @@ from pydantic import BaseModel, Field
 class NoteRequest(BaseModel):
     doctor_name: str = Field(default="")
     patient_name: str = Field(default="")
-    age: int | None = Field(default=None, ge=0, le=120)
+    patient_phone: str = Field(pattern=r"^\d{10}$")
+    age: int | None = Field(default=None, ge=0, le=110)
     sex: str = Field(default="")
+    blood_group: str = Field(default="")
     transcript: str = Field(min_length=10)
     gemini_api_key: str = Field(default="")
     model: str = Field(default="gemini-2.5-flash")
@@ -62,8 +64,10 @@ Rules:
 Patient context:
 - Doctor: {req.doctor_name or "Not provided"}
 - Patient: {req.patient_name or "Unknown"}
+- Patient Phone: {req.patient_phone or "NA"}
 - Age: {req.age if req.age is not None else "NA"}
 - Sex: {req.sex or "NA"}
+- Blood Group: {req.blood_group or "NA"}
 
 Transcript:
 {req.transcript.strip()}
@@ -74,7 +78,84 @@ def parse_json_text(text: str) -> dict:
     cleaned = text.strip()
     if cleaned.startswith("```"):
         cleaned = cleaned.replace("```json", "").replace("```", "").strip()
-    return json.loads(cleaned)
+
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Fallback: extract the first valid top-level JSON object from mixed output.
+    start = cleaned.find("{")
+    if start == -1:
+        raise json.JSONDecodeError("No JSON object found", cleaned, 0)
+
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(cleaned)):
+        ch = cleaned[i]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return json.loads(cleaned[start : i + 1])
+
+    raise json.JSONDecodeError("Incomplete JSON object", cleaned, start)
+
+
+def _to_text(value: object, fallback: str = "Not documented") -> str:
+    if value is None:
+        return fallback
+    if isinstance(value, str):
+        return value.strip() or fallback
+    if isinstance(value, (list, tuple)):
+        parts = [str(v).strip() for v in value if str(v).strip()]
+        return ", ".join(parts) if parts else fallback
+    if isinstance(value, dict):
+        pairs = [f"{k}: {v}" for k, v in value.items()]
+        return ", ".join(pairs) if pairs else fallback
+    return str(value).strip() or fallback
+
+
+def _to_list(value: object, fallback_item: str = "Not documented") -> list[str]:
+    if value is None:
+        return [fallback_item]
+    if isinstance(value, list):
+        items = [str(v).strip() for v in value if str(v).strip()]
+        return items or [fallback_item]
+    if isinstance(value, str):
+        text = value.strip()
+        return [text] if text else [fallback_item]
+    if isinstance(value, dict):
+        return [_to_text(value, fallback_item)]
+    text = str(value).strip()
+    return [text] if text else [fallback_item]
+
+
+def normalize_note_dict(note_dict: dict) -> dict:
+    return {
+        "chief_complaints": _to_list(note_dict.get("chief_complaints"), "General consultation"),
+        "duration": _to_text(note_dict.get("duration")),
+        "history": _to_text(note_dict.get("history")),
+        "vitals": _to_text(note_dict.get("vitals")),
+        "medications": _to_list(note_dict.get("medications"), "To be confirmed by doctor"),
+        "allergies": _to_text(note_dict.get("allergies")),
+        "assessment": _to_text(note_dict.get("assessment")),
+        "plan": _to_list(note_dict.get("plan"), "Clinical review advised"),
+        "follow_up": _to_text(note_dict.get("follow_up"), "As needed"),
+    }
 
 
 def call_gemini(req: NoteRequest) -> StructuredNote:
@@ -88,7 +169,12 @@ def call_gemini(req: NoteRequest) -> StructuredNote:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     body = {
         "contents": [{"parts": [{"text": build_prompt(req)}]}],
-        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 1024},
+        "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": 2048,
+            "responseMimeType": "application/json",
+            "thinkingConfig": {"thinkingBudget": 0},
+        },
     }
 
     request = Request(
@@ -118,7 +204,8 @@ def call_gemini(req: NoteRequest) -> StructuredNote:
 
     try:
         note_dict = parse_json_text(text)
-        return StructuredNote(**note_dict)
+        normalized = normalize_note_dict(note_dict)
+        return StructuredNote(**normalized)
     except Exception as exc:
         raise HTTPException(status_code=502, detail="Gemini response was not valid structured JSON.") from exc
 
